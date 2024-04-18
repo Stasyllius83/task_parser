@@ -1,18 +1,18 @@
-import asyncio
-import os
+# import asyncio
+# import os
 from pathlib import Path
 from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 from bs4 import BeautifulSoup
 import requests
-import telebot
+#import telebot
 
 
 
-URL = 'https://api.telegram.org/bot'
-TELEGRAM_TOKEN = DATABASE = os.getenv('TELEGRAM_TOKEN')
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+#URL = 'https://api.telegram.org/bot'
+#TELEGRAM_TOKEN = DATABASE = os.getenv('TELEGRAM_TOKEN')
+#bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 TASK_TOPIC = ['brute', 'math','strings', 'greedy', \
               'implementation', 'sortings', 'constructive', \

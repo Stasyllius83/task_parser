@@ -1,10 +1,9 @@
 import asyncio
-
 #from source.services import send_telegram
-from source.services import bot
-from source.classes import Task_base
+#from source.services import bot
+from source.classes import Io_telebot, Task_base
 tsk = Task_base()
-
+telebot = Io_telebot()
 
 async def main():
 
@@ -12,8 +11,8 @@ async def main():
 
 
     task1 = asyncio.create_task(tsk.fill_db())
-    task2 = asyncio.create_task(bot.polling(non_stop=True, interval=0))
-
+    #task2 = asyncio.create_task(bot.polling(non_stop=True, interval=0))
+    task2 = asyncio.create_task(telebot())
     #task3 = asyncio.create_task(tsk.task_req())
     #task4 = asyncio.create_task(send_telegram())
 
