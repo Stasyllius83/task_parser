@@ -11,7 +11,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 DATABASE = os.getenv('DB_CONNECT')
 from celery import Celery
+from celery.schedules import crontab
 app = Celery('classes')
+app.config_from_object('celeryconfig')
 
 
 
@@ -20,7 +22,6 @@ class Task(Base):
 
     """
     __tablename__ = 'task'
-    # __table_args__ = (UniqueConstraint('name_number'),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     topic = Column('topic', String)
@@ -35,12 +36,9 @@ class Task(Base):
 
 class Task_base:
     """
-
     """
-
     def __init__(self) -> None:
         """
-
         """
         self.engine = create_engine(DATABASE)
         self.session = self.create_session(self.engine)
@@ -48,7 +46,6 @@ class Task_base:
 
     def create_table(self, table_name):
         """
-
         """
         if not self.engine.dialect.has_table(self.engine.connect(), table_name):
             Base.metadata.create_all(self.engine)
@@ -56,14 +53,13 @@ class Task_base:
     @staticmethod
     def create_session(engine):
         """
-
         """
         Session = sessionmaker(bind=engine)
         return Session()
 
+    @app.task
     async def fill_db(self):
         """
-
         """
         try:
             all_tasks = await task_parser()
@@ -87,11 +83,13 @@ class Task_base:
             print(f"Произошла ошибка {e}")
             await asyncio.sleep(10)
 
-    @app.task
-    async def task_req(self):
+
+    async def task_req(self, item):
         """
 
         """
+        print(item)
+
         session = self.create_session(self.engine)
 
         tasks_req = session.query(Task).filter(Task.topic == 'math', Task.difficulty == '800',).order_by(Task.id.desc()).limit(10).all()
