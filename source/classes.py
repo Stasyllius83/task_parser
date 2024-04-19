@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import time
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine, Column, Integer, String, Numeric, UniqueConstraint
@@ -76,12 +77,12 @@ class Task_base:
 
 
     @app.task
-    async def fill_db(self):
+    def fill_db(self):
         """
 
         """
         try:
-            all_tasks = await task_parser()
+            all_tasks = task_parser()
 
             for task in all_tasks:
 
@@ -100,18 +101,18 @@ class Task_base:
 
         except Exception as e:
             print(f"Произошла ошибка {e}")
-            await asyncio.sleep(10)
+            time.sleep(10)
 
 
-    async def task_req(self, item):
+    def task_req(self, topic):
         """
 
         """
-        print(item)
+        print(topic)
 
         session = self.create_session(self.engine)
 
-        tasks_req = session.query(Task).filter(Task.topic == 'math', Task.difficulty == '800',).order_by(Task.id.desc()).limit(10).all()
+        tasks_req = session.query(Task).filter(Task.topic == topic, Task.difficulty == '800',).order_by(Task.id.desc()).limit(10).all()
 
         all_task_list = []
         for obj in tasks_req:
@@ -222,5 +223,6 @@ class Io_telebot:
         if self.param['topic'] != 0:
             topic = self.param['topic']
             tasks = self.task_base.task_req(topic)
+            print(tasks.result())
             self.list_tasks = tasks.result().copy()
         self.param = copy.deepcopy(self.new_param)

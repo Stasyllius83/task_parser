@@ -21,8 +21,10 @@ TASK_TOPIC = ['brute', 'math','strings', 'greedy', \
                         'binary', 'number', 'theory', 'dp', 'pointers', \
                             'parsing', 'expression', 'two', '*special', 'data', 'bitmasks']
 
-async def task_parser():
+def task_parser():
+    """
 
+    """
     num_of_page = 95
     for i in range(num_of_page):
         url = 'https://codeforces.com/problemset/page/' + str(i) + '?order=BY_SOLVED_DESC'
