@@ -1,4 +1,3 @@
-import asyncio
 import copy
 import time
 
@@ -17,7 +16,7 @@ DATABASE = os.getenv('DB_CONNECT')
 
 from aiogram import Bot, types, Dispatcher
 from aiogram.utils import executor
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.storage import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -118,11 +117,30 @@ class Task_base:
         return all_task_list
 
 
+    def task_detail(self, name_N):
+        """
+
+        """
+
+        session = self.create_session(self.engine)
+
+        task_detail = session.query(Task).filter(Task.name_number.ilike(name_N)).limit(1).all()
+
+        for obj in task_detail:
+            task_detail_list = []
+            task_detail_list.append(obj.name_number)
+            task_detail_list.append(obj.topic)
+            task_detail_list.append(int(obj.difficulty))
+            task_detail_list.append(int(obj.quantity_solved))
+            return task_detail_list
+
+
 class Io_telebot:
 
     new_param = {
             'topic': 0,
-            'difficulty': 0
+            'difficulty': 0,
+            'name_n': 0
         }
 
     TOKEN: str = os.getenv('TELEGRAM_TOKEN')
@@ -130,6 +148,7 @@ class Io_telebot:
     def __init__(self):
         self.task_base = Task_base()
         self.list_tasks = []
+        self.task_detail = []
         self.param = copy.deepcopy(self.new_param)
         self.bot = Bot(self.TOKEN)
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
@@ -138,12 +157,15 @@ class Io_telebot:
         class Data_parse(StatesGroup):
             choosing_topic = State()
             choosing_difficulty = State()
+            get_detail = State()
 
         but_1 = KeyboardButton('/Task_parser')
         keybut_1 = ReplyKeyboardMarkup(resize_keyboard=True)
         keybut_1.add(but_1)
 
         keybut_2 = ReplyKeyboardMarkup(resize_keyboard=True)
+        # keybut_2 = InlineKeyboardMarkup(row_width=3)
+        # keybut_2.add(InlineKeyboardButton(text='brute'), InlineKeyboardButton(text='math'), InlineKeyboardButton(text='strings'))
         but_2 = KeyboardButton('/brute')
         but_3 = KeyboardButton('/math')
         but_4 = KeyboardButton('/strings')
@@ -187,9 +209,9 @@ class Io_telebot:
 
         keybut_3.add(but_30).add(but_31).add(but_32).add(but_33).add(but_34).add(but_35)
 
-        @self.dp.message_handler(commands=['start', 'help'])
+        @self.dp.message_handler(commands=['start'])
         async def command_start(message: types.Message):
-            await self.bot.send_message(message.from_user.id, 'Привет!', reply_markup=keybut_1)
+            await self.bot.send_message(message.from_user.id, 'Привет, выберите команду Task_parser!', reply_markup=keybut_1)
 
         @self.dp.message_handler(commands=['Task_parser'], state=None)
         async def command_start(message: types.Message):
@@ -197,6 +219,10 @@ class Io_telebot:
             await self.bot.send_message(message.from_user.id, 'Я могу перебирать задачи по 10 шт в \
                                         выборке. Какую тему вы хотите выбрать?', reply_markup=keybut_2)
 
+        # @self.dp.callback_query_handler(state=Data_parse.choosing_topic)
+        # async def input_topic(call: types.CallbackQuery, state: FSMContext):
+        #     async with state.proxy() as data:
+        #         data['topic'] = call.data
         @self.dp.message_handler(content_types=['text'], state=Data_parse.choosing_topic)
         async def input_topic(message: types.Message):
             if message.text == '/brute':
@@ -217,7 +243,46 @@ class Io_telebot:
                 self.param['topic'] = 'algorithms'
             elif message.text == '/graph':
                 self.param['topic'] = 'graph'
+            elif message.text == '/matchings':
+                self.param['topic'] = 'matchings'
+            elif message.text == '/shortest':
+                self.param['topic'] = 'shortest'
+            elif message.text == '/paths':
+                self.param['topic'] = 'paths'
+            elif message.text == '/Function':
+                self.param['topic'] = 'Function'
+            elif message.text == '/Problem':
+                self.param['topic'] = 'Problem'
+            elif message.text == '/structures':
+                self.param['topic'] = 'structures'
+            elif message.text == '/hashing':
+                self.param['topic'] = 'hashing'
+            elif message.text == '/search':
+                self.param['topic'] = 'search'
+            elif message.text == '/binary':
+                self.param['topic'] = 'binary'
+            elif message.text == '/number':
+                self.param['topic'] = 'number'
+            elif message.text == '/theory':
+                self.param['topic'] = 'theory'
+            elif message.text == '/dp':
+                self.param['topic'] = 'dp'
+            elif message.text == '/pointers':
+                self.param['topic'] = 'pointers'
+            elif message.text == '/parsing':
+                self.param['topic'] = 'parsing'
+            elif message.text == '/expression':
+                self.param['topic'] = 'expression'
+            elif message.text == '/two':
+                self.param['topic'] = 'two'
+            elif message.text == '/*special':
+                self.param['topic'] = '*special'
+            elif message.text == '/data':
+                self.param['topic'] = 'data'
+            elif message.text == '/bitmasks':
+                self.param['topic'] = 'bitmasks'
 
+            # await call.message.answer('Выберите сложность задач', reply_markup=keybut_3)
             await Data_parse.next()
             await message.reply('Выберите сложность задач', reply_markup=keybut_3)
 
@@ -239,10 +304,22 @@ class Io_telebot:
             self.parse()
             await Data_parse.next()
 
-            for index, task in enumerate(self.list_tasks):
-                await self.bot.send_message(message.from_user.id, f'{index+1} : name_number - {task[0]}, topic - {task[1]}, difficulty - {task[2]}, quantity_solved - {task[3]}', reply_markup=keybut_1)
 
+            for index, task in enumerate(self.list_tasks):
+                await self.bot.send_message(message.from_user.id, f'{index+1} : name № - {task[0]}, topic - {task[1]}, difficulty - {task[2]}, quantity_solved - {task[3]}')
+
+            await message.reply('Чтоб посмотреть детали задачи наберите имя задачи?', reply_markup=ReplyKeyboardRemove())
             self.list_tasks = [].copy()
+
+        @self.dp.message_handler(state=Data_parse.get_detail)
+        async def input_name_n(message: types.Message, state: FSMContext):
+            async with state.proxy() as data:
+                self.param['name_n'] = message.text
+
+            self.detail_task()
+
+            await self.bot.send_message(message.from_user.id, f'name № - {self.task_detail[0]}, topic - {self.task_detail[1]}, difficulty - {self.task_detail[2]}, quantity_solved - {self.task_detail[3]}', reply_markup=keybut_1)
+
             await Data_parse.next()
 
         @self.dp.message_handler()
@@ -258,4 +335,12 @@ class Io_telebot:
             difficulty = self.param['difficulty']
             tasks = self.task_base.task_req(topic, difficulty)
             self.list_tasks = tasks.copy()
+        self.param = copy.deepcopy(self.new_param)
+
+
+    def detail_task(self):
+        if self.param['name_n'] != 0:
+            name_n = self.param['name_n']
+            task_detail = self.task_base.task_detail(name_n)
+            self.task_detail = task_detail.copy()
         self.param = copy.deepcopy(self.new_param)
