@@ -24,8 +24,13 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 
 class Task(Base):
-    """
+    """Класс для формирования модели задачи в orm sqlalchemy
 
+    Args:
+        Base (_type_): _description_
+
+    Returns:
+        class 'type': _description_
     """
     __tablename__ = 'task'
 
@@ -41,12 +46,14 @@ class Task(Base):
 
 
 class Task_base:
-    """
+    """Класс для работы с данными спарсенными с сайта https://codeforces.com/
 
+    Returns:
+        _type_: _description_
     """
     def __init__(self) -> None:
         """
-
+        Инициализация класса. Инициализированны подключение к бд posgresql, сессия и имя таблицы
         """
         self.engine = create_engine(DATABASE)
         self.session = self.create_session(self.engine)
@@ -54,8 +61,10 @@ class Task_base:
 
 
     def create_table(self, table_name):
-        """
+        """Метод для создания таблицы в бд
 
+        Args:
+            table_name (str): имя таблицы создаваемой в базе данных
         """
         if not self.engine.dialect.has_table(self.engine.connect(), table_name):
             Base.metadata.create_all(self.engine)
@@ -63,16 +72,20 @@ class Task_base:
 
     @staticmethod
     def create_session(engine):
-        """
+        """Статический метод для создания сессии
 
+        Args:
+            engine (_type_): _description_
+
+        Returns:
+            .__bases__: экземпляр сессии
         """
         Session = sessionmaker(bind=engine)
         return Session()
 
 
     def fill_db(self):
-        """
-
+        """Метод для заполнения базы данных. Вызывает функцию парсера task_parser()
         """
         try:
             all_tasks = task_parser()
@@ -98,10 +111,15 @@ class Task_base:
 
 
     def task_req(self, topic, difficulty):
-        """
+        """Метод берет из бд 10 задач по выбранным тематике и сложности
 
-        """
+        Args:
+            topic (str): тема задачи
+            difficulty (str): сложность задачи
 
+        Returns:
+            list: список запрошенных задач
+        """
         session = self.create_session(self.engine)
 
         tasks_req = session.query(Task).filter(Task.topic == topic, Task.difficulty == difficulty,).order_by(Task.id.desc()).limit(10).all()
@@ -118,10 +136,14 @@ class Task_base:
 
 
     def task_detail(self, name_N):
-        """
+        """Метод достает из бд данные по имени и номеру задачи
 
-        """
+        Args:
+            name_N (str): название и номер задачи
 
+        Returns:
+            list: список деталей запрошенной задачи
+        """
         session = self.create_session(self.engine)
 
         task_detail = session.query(Task).filter(Task.name_number.ilike(name_N)).limit(1).all()
@@ -136,7 +158,11 @@ class Task_base:
 
 
 class Io_telebot:
+    """Класс для работы с телеграм ботом
+    """
 
+    """Параметры для получения из телеграм бота
+    """
     new_param = {
             'topic': 0,
             'difficulty': 0,
@@ -146,6 +172,8 @@ class Io_telebot:
     TOKEN: str = os.getenv('TELEGRAM_TOKEN')
 
     def __init__(self):
+        """Инициализация класса, списка задач, списка детализации задачи. Создание экземпляра класса задач.
+        """
         self.task_base = Task_base()
         self.list_tasks = []
         self.task_detail = []
@@ -154,6 +182,8 @@ class Io_telebot:
         self.dp = Dispatcher(self.bot, storage=MemoryStorage())
 
     def __call__(self):
+        """Метод __call__ вся логика бота
+        """
         class Data_parse(StatesGroup):
             choosing_topic = State()
             choosing_difficulty = State()
@@ -330,6 +360,8 @@ class Io_telebot:
 
 
     def parse(self):
+        """Функция передачи запроса на 10 задач, полученного от бота в бд и формирование ответа
+        """
         if self.param['topic'] != 0 and self.param['difficulty'] != 0:
             topic = self.param['topic']
             difficulty = self.param['difficulty']
@@ -339,6 +371,8 @@ class Io_telebot:
 
 
     def detail_task(self):
+        """Функция передачи запроса на детализацию задачи, полученного от бота в бд и формирование ответа
+        """
         if self.param['name_n'] != 0:
             name_n = self.param['name_n']
             task_detail = self.task_base.task_detail(name_n)

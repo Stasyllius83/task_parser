@@ -10,9 +10,12 @@ TASK_TOPIC = ['brute', 'math','strings', 'greedy', \
                         'binary', 'number', 'theory', 'dp', 'pointers', \
                             'parsing', 'expression', 'two', '*special', 'data', 'bitmasks']
 
-def task_parser():
-    """
 
+def task_parser():
+    """Функция парсит с сайта https://codeforces.com/ данные по задачам и складывает их в списки
+
+    Returns:
+        list: список списков задач
     """
     num_of_page = 95
     for i in range(num_of_page):
